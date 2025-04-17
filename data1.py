@@ -1,62 +1,98 @@
-
 import streamlit as st
-import matplotlib.pyplot as plt
+from streamlit_ace import st_ace
+import pandas as pd
+import io
+import sys
 
 def show():
-    st.subheader("📘 2일차 1교시 수업: 등차수열의 개념")
-    st.markdown("""
-    - **주제**: 등차수열의 일반항과 합
-    - **목표**: 등차수열의 규칙을 이해하고 일반항과 합을 구할 수 있다.
-    - **예제**: 2, 5, 8, 11, ... 의 일반항과 합 구하기
-    - **활동**: 코드 작성 → 실행 → 채점 → 시각화
-    """)
-
+    st.header("1day 파이썬 기초: 자료형, 변수, 리스트")
     st.divider()
-    st.subheader("✏️ 1단계: 나만의 등차수열 코드 작성")
 
-    default_code = """# 첫째항이 2이고 공차가 3인 등차수열 앞 5개 항 출력
-sequence = []
-for i in range(5):
-    sequence.append(2 + 3*i)
-st.write("등차수열:", sequence)
-"""
+    st.subheader("🎥 수업 영상 보기")
 
-    user_code = st.text_area("등차수열을 출력하는 코드를 작성해보세요!", height=220, value=default_code)
+    st.subheader("📌 학습 목표")
+    st.write("""
+    - 파이썬의 기본 자료형과 변수 선언의 이해
+    - 리스트 생성과 요소 접근 방법 알기""")
+    st.divider()
 
-    # 코드 실행 및 결과 저장
-    local_vars = {}
+    st.subheader("ℹ️ 자료형")
+    st.write("""          
+    - 문자열: 메일 제목, 메시지 내용 등 따옴표('')로 감싸서 입력 Ex. 'Hello World'
+    - 숫자열: 물건의 가격, 학생의 성적 Ex. 52, 12
+    - 불: 친구의 로그인 상태 Ex. True, False""")
 
-    if st.button("✅ 코드 실행하기"):
-        try:
-            exec(user_code, {"st": st}, local_vars)
-            if "sequence" in local_vars:
-                st.success("✅ 코드 실행 완료!")
-                st.write("🔍 출력된 수열:", local_vars["sequence"])
-            else:
-                st.warning("⚠️ 'sequence' 리스트가 정의되지 않았어요. 변수명을 확인해주세요.")
-        except Exception as e:
-            st.error(f"❌ 오류가 발생했어요: {e}")
+    st.subheader("ℹ️ 출력: print() 함수")
+    st.write("""          
+    - 함수의 괄호 안에 출력하고 싶은 내용을 적습니다.
+    - 함수 뒤에 출력하고 싶은 내용을 쉼표로 연결해서 여러 개 적어도 됩니다.""")
+    st.write("""**[문제] 아래와 같이 print 함수를 이용해서 다양한 자료형을 출력해보세요**""")
 
-    # 채점 기능
-    if "sequence" in local_vars:
-        st.divider()
-        st.subheader("📋 2단계: 자동 채점 결과")
+    # 상태 초기화
+    if "output" not in st.session_state:
+        st.session_state.output = ""
 
-        expected = [2, 5, 8, 11, 14]
-        user_seq = local_vars["sequence"]
+    # 레이아웃
+    c1, c2 = st.columns(2)
 
-        if user_seq == expected:
-            st.success("🎉 정답입니다! 등차수열을 정확히 출력했어요.")
-        else:
-            st.error(f"❌ 수열이 정답과 다릅니다.\n\n👉 정답: {expected}\n🧪 당신의 출력: {user_seq}")
+    with c1:
+        st.markdown("### 📥 코드 입력")
+        code_input = st_ace(
+            value="print('hello', 320)\nprint(21)",
+            language='python',
+            theme='dracula',
+            height=250,
+            key="ace_editor"
+        )
 
-        # 시각화
-        st.divider()
-        st.subheader("📊 3단계: 수열 시각화")
+    with c2:
+        st.markdown("### 📤 실행 결과")
+        if st.button("▶️ 코드 실행하기"):
+            output_buffer = io.StringIO()
+            try:
+                sys.stdout = output_buffer
+                exec_globals = {}
+                exec(code_input, exec_globals)
+                sys.stdout = sys.__stdout__
+                st.session_state.output = output_buffer.getvalue() or "출력된 내용이 없습니다."
+                st.session_state.status = "success"
+            except Exception as e:
+                sys.stdout = sys.__stdout__
+                st.session_state.output = f"{e.__class__.__name__}: {e}"
+                st.session_state.status = "error"
+                
+        # 출력 스타일링
+        if st.session_state.status == "success":
+            st.markdown(f"```bash\n{st.session_state.output}\n```")
+        elif st.session_state.status == "error":
+            st.markdown("#### ❌ 실행 중 오류 발생")
+            st.markdown(f"<pre style='color: red; background-color: #ffe6e6; padding: 10px; border-radius: 5px;'>{st.session_state.output}</pre>", unsafe_allow_html=True)
 
-        fig, ax = plt.subplots()
-        ax.plot(range(1, len(user_seq)+1), user_seq, marker='o')
-        ax.set_title("등차수열 시각화")
-        ax.set_xlabel("항 번호")
-        ax.set_ylabel("값")
-        st.pyplot(fig)
+
+        # 사칙연산 정리 데이터
+    data = {
+        "연산 종류": [
+            "덧셈", "뺄셈", "곱셈", "나눗셈", "정수 나눗셈", "나머지", "거듭제곱", "부호 반전"
+        ],
+        "연산자": ["+", "-", "*", "/", "//", "%", "**", "-"],
+        "예시 코드": [
+            "3 + 2", "5 - 2", "4 * 2", "10 / 4", "10 // 4", "10 % 4", "2 ** 3", "-7"
+        ],
+        "결과": [5, 3, 8, 2.5, 2, 2, 8, -7],
+        "설명": [
+            "두 수를 더함",
+            "앞 수에서 뒤 수를 뺌",
+            "두 수를 곱함",
+            "실수 나눗셈 결과",
+            "몫만 구함 (소수점 버림)",
+            "나눗셈의 나머지 계산",
+            "제곱 (2의 3제곱)",
+            "음수 값 표현"
+        ]
+    }
+    # 데이터프레임 생성
+    df = pd.DataFrame(data)
+
+    # Streamlit 앱 출력
+    st.subheader("🧮 파이썬 사칙연산 정리표")
+    st.dataframe(df, use_container_width=True)
