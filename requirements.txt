@@ -1,3 +1,6 @@
 streamlit
 matplotlib
 streamlit_ace
+numpy
+io
+sys
