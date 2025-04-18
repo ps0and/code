@@ -1,224 +1,124 @@
 import streamlit as st
 from streamlit_ace import st_ace
-import pandas as pd
 import io
 import sys
 
+# ✅ 실행 함수
+def code_runner(code_input, output_key, status_key):
+    output_buffer = io.StringIO()
+    try:
+        sys.stdout = output_buffer
+        exec_globals = {}
+        exec(code_input, exec_globals)
+        sys.stdout = sys.__stdout__
+        st.session_state[output_key] = output_buffer.getvalue() or "출력된 내용이 없습니다."
+        st.session_state[status_key] = "success"
+    except Exception as e:
+        sys.stdout = sys.__stdout__
+        st.session_state[output_key] = f"{e.__class__.__name__}: {e}"
+        st.session_state[status_key] = "error"
+
+# ✅ 출력 함수
+def display_output(output_key, status_key):
+    if st.session_state.get(status_key) == "success":
+        st.markdown(f"```bash\n{st.session_state[output_key]}\n```")
+    elif st.session_state.get(status_key) == "error":
+        st.markdown("#### ❌ 실행 중 오류 발생")
+        st.markdown(
+            f"<pre style='color: red; background-color: #ffe6e6; padding: 10px; border-radius: 5px;'>{st.session_state[output_key]}</pre>",
+            unsafe_allow_html=True
+        )
+
+# ✅ 좌우(2열) 코드 블록
+def code_block_columns(problem_number, starter_code):
+    output_key = f"output{problem_number}"
+    status_key = f"status{problem_number}"
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown("### 📥 코드 입력")
+        code_input = st_ace(
+            value=starter_code,
+            language='python',
+            theme='dracula',
+            height=220,
+            key=f"editor{problem_number}"
+        )
+    with c2:
+        st.markdown("### 📤 실행 결과")
+        if st.button("▶️ 코드 실행하기", key=f"run{problem_number}"):
+            code_runner(code_input, output_key, status_key)
+        display_output(output_key, status_key)
+    st.divider()
+
+# ✅ 상하(1열) 코드 블록
+def code_block_rows(problem_number, starter_code):
+    output_key = f"output{problem_number}"
+    status_key = f"status{problem_number}"
+    st.markdown("### 📥 코드 입력")
+    code_input = st_ace(
+        value=starter_code,
+        language='python',
+        theme='dracula',
+        height=200,
+        key=f"editor{problem_number}"
+    )
+    if st.button("▶️ 코드 실행하기", key=f"run{problem_number}"):
+        code_runner(code_input, output_key, status_key)
+    st.markdown("### 📤 실행 결과")
+    display_output(output_key, status_key)
+    st.divider()
+
+# ✅ 메인 수업 내용
 def show():
-    if "status" not in st.session_state:
-        st.session_state.status = ""
-    if "output" not in st.session_state:
-        st.session_state.output = ""
-    st.header("🗓️2day")
+    st.header("🗓️ 2day")
     st.subheader("파이썬 기초: 조건문, 반복문")
-    st.write("수학을 코딩하기위해서는 코딩에 대한 기본 문법을 알고 있어야 합니다.")
-    st.write("코딩 시작합니다.")
+    st.write("수학을 코딩하기 위해서는 코딩 문법을 정확히 이해해야 합니다.")
     st.divider()
 
     st.subheader("🎥 수업 영상 보기")
     st.video("https://youtu.be/wuxmZ8lu79s?si=sdRCeDq5m0blQDv0")
+
     st.subheader("📌 학습 목표")
     st.write("""
-    - 파이썬의 기본 자료형과 변수 선언의 이해
-    - 리스트 생성과 요소 접근 방법 알기""")
+    - 조건문(if/else)의 기본 구조 이해
+    - 짝수/홀수 판별 프로그램 만들기
+    - 반복문(for)의 구조 이해 및 실습
+    """)
     st.divider()
 
-    st.subheader("ℹ️ 조건문")
-    st.write("""
-    - 조건에 따라 코드를 실행하거나, 실행하지 않게 만들고 싶을 때 사용하는 구문
-    - ```if```: 주어진 조건이 참(True)일 때 특정 코드를 실행합니다.
-    - ```else```: 모든 조건이 거짓일 때 실행되는 코드를 정의합니다.        
-    - ```if 조건:``` 조건을 입력하고 반드지 ```:```를 입력한다. 
-    """) 
+    st.subheader("ℹ️ 조건문 기본")
     st.code("""
     if 조건:
-        조건이 True인 경우 실행될 명령어
+        조건이 True일 때 실행할 코드
     else:
-        조건이 False인 경우 실행될 명령어
-    """) 
-    st.subheader("🧮 파이썬 사칙연산 정리표")
-    st.image("image\data2_img1.png")
+        조건이 False일 때 실행할 코드
+    """)
+    st.markdown("""##### 💻 [문제 1] 조건문을 사용해 `a > b`인 경우 메시지를 출력해보세요""")
+    code_block_rows(1, """a = 10\nb = 3\nif a > b:\n    print('a는 b보다 크다')\nelse:\n    print('a는 b보다 작거나 같다')""")
 
-    st.markdown("""##### 💻[문제] 아래와 같이 조건문을 이용하여 참인 결과를 출력해보세요""")
+    st.markdown("""##### 💻 [문제 2]  아래 코드는 짝수/홀수를 정확히 판별하지 못합니다. 조건을 수정하여 `num`이 짝수인지 홀수인지 정확히 출력되도록 코드를 고쳐보세요""")
+    code_block_columns(2, """num = 1\nif num :\n    print('num은 짝수')\nelse:\n    print('num은 홀수')""")
 
-    # 세션 상태 초기화
-    if "output" not in st.session_state:
-        st.session_state.output = ""
-
-    st.markdown("### 📥 코드 입력")
-    code_input = st_ace(
-        value="a = 10\nb = 3\nif a > b:#a가b보다 크다면\n    print('a는 b보다 크다')#조건이 참인경우 a가b보다 크다 출력\nelse:\n    print('a는 b보다 작거나 같습니다')#거짓인 경우 a가b보다 작거나 같다 출력",
-        language='python',
-        theme='dracula',
-        height=200,
-        key="ace_editor1"
-    )
-
-    # 실행 버튼
-    if st.button("▶️ 코드 실행하기", key="run1"):
-        output_buffer = io.StringIO()
-        try:
-            sys.stdout = output_buffer
-            exec_globals = {}
-            exec(code_input, exec_globals)
-            sys.stdout = sys.__stdout__
-            st.session_state.output = output_buffer.getvalue() or "출력된 내용이 없습니다."
-            st.session_state.status = "success"
-        except Exception as e:
-            sys.stdout = sys.__stdout__
-            st.session_state.output = f"{e.__class__.__name__}: {e}"
-            st.session_state.status = "error"
-
-    # 실행 결과 표시
-    st.markdown("### 📤 실행 결과")
-    if st.session_state.status == "success":
-        st.markdown(f"```bash\n{st.session_state.output}\n```")
-    elif st.session_state.status == "error":
-        st.markdown("#### ❌ 실행 중 오류 발생")
-        st.markdown(
-            f"<pre style='color: red; background-color: #ffe6e6; padding: 10px; border-radius: 5px;'>{st.session_state.output}</pre>",
-            unsafe_allow_html=True
-        )
-
-    st.divider()
-
-    st.markdown("""##### 💻[발전문제] 조건문을 이용하여 num에 입력된 값이 짝수인지 홀수인지 구분하는 프로그램을 작성하세요""")
-     # 상태 초기화
-    if "output" not in st.session_state:
-        st.session_state.output = ""
-
-    # 레이아웃
-    c1, c2 = st.columns(2)
-
-    with c1:
-        st.markdown("### 📥 코드 입력")
-        code_input = st_ace(
-            value="num = \nif :\n    print('num은 짝수입니다')\nelse:\n    print('num은 홀수입니다.')",
-            language='python',
-            theme='dracula',
-            height=250,
-            key="ace_editor2"
-        )
-
-    with c2:
-        st.markdown("### 📤 실행 결과")
-        if st.button("▶️ 코드 실행하기",key="run2"):
-            output_buffer = io.StringIO()
-            try:
-                sys.stdout = output_buffer
-                exec_globals = {}
-                exec(code_input, exec_globals)
-                sys.stdout = sys.__stdout__
-                st.session_state.output = output_buffer.getvalue() or "출력된 내용이 없습니다."
-                st.session_state.status = "success"
-            except Exception as e:
-                sys.stdout = sys.__stdout__
-                st.session_state.output = f"{e.__class__.__name__}: {e}"
-                st.session_state.status = "error"
-
-        # 출력 스타일링
-        if st.session_state.status == "success":
-            st.markdown(f"```bash\n{st.session_state.output}\n```")
-        elif st.session_state.status == "error":
-            st.markdown("#### ❌ 실행 중 오류 발생")
-            st.markdown(f"<pre style='color: red; background-color: #ffe6e6; padding: 10px; border-radius: 5px;'>{st.session_state.output}</pre>", unsafe_allow_html=True)
-    st.divider()
-
-    st.subheader("ℹ️ 반복문")
+    st.subheader("ℹ️ 반복문 for")
     st.write("""
-    - 조건에 따라 코드를 실행하거나, 실행하지 않게 만들고 싶을 때 사용하는 구문
-    - ```if```: 주어진 조건이 참(True)일 때 특정 코드를 실행합니다.
-    - ```else```: 모든 조건이 거짓일 때 실행되는 코드를 정의합니다.        
-    - ```if 조건:``` 조건을 입력하고 반드지 ```:```를 입력한다. 
-    """) 
+    - 범위 `range(start,end)`는 start부터 end-1까지의 정수로 범위를 만든다.  
+    """)
+    st.write("""
+    - `for`반복문은 특정 작업을 여러 번 반복할 때 사용 
+    - 범위에 있는 요소 하나하나가 반복자(변수)에 들어가며 차례차례 아래 코드가 반복된다.
+    """)
     st.code("""
-    if 조건:
-        조건이 True인 경우 실행될 명령어
-    else:
-        조건이 False인 경우 실행될 명령어
-    """) 
+    for 반복자 in 반복할 수 있는 것: #반복할 수 있는 것에 리스트, 범위 등이 있다.
+        코드
+    """)
+    st.code("""
+    for i in range(1,4): #범위에 있는 요소 1,2,3 하나하나가 i라는 변수에 들어간다.
+        print(i) #print()함수로 i를 출력한다.
+    # 출력: 1,2,3
+    """)
 
-    st.markdown("""##### 💻[문제] 아래와 같이 조건문을 이용하여 참인 결과를 출력해보세요""")
+    st.markdown("""##### 💻 [문제 3] 1부터 10까지 숫자를 출력하는 코드를 작성하세요""")
+    code_block_columns(3, """for i""")
 
-    # 세션 상태 초기화
-    if "output" not in st.session_state:
-        st.session_state.output = ""
-
-    st.markdown("### 📥 코드 입력")
-    code_input = st_ace(
-        value="a = 10\nb = 3\nif a > b:#a가b보다 크다면\n    print('a는 b보다 크다')#조건이 참인경우 a가b보다 크다 출력\nelse:\n    print('a는 b보다 작거나 같습니다')#거짓인 경우 a가b보다 작거나 같다 출력",
-        language='python',
-        theme='dracula',
-        height=200,
-        key="ace_editor3"
-    )
-
-    # 실행 버튼
-    if st.button("▶️ 코드 실행하기", key="run3"):
-        output_buffer = io.StringIO()
-        try:
-            sys.stdout = output_buffer
-            exec_globals = {}
-            exec(code_input, exec_globals)
-            sys.stdout = sys.__stdout__
-            st.session_state.output = output_buffer.getvalue() or "출력된 내용이 없습니다."
-            st.session_state.status = "success"
-        except Exception as e:
-            sys.stdout = sys.__stdout__
-            st.session_state.output = f"{e.__class__.__name__}: {e}"
-            st.session_state.status = "error"
-
-    # 실행 결과 표시
-    st.markdown("### 📤 실행 결과")
-    if st.session_state.status == "success":
-        st.markdown(f"```bash\n{st.session_state.output}\n```")
-    elif st.session_state.status == "error":
-        st.markdown("#### ❌ 실행 중 오류 발생")
-        st.markdown(
-            f"<pre style='color: red; background-color: #ffe6e6; padding: 10px; border-radius: 5px;'>{st.session_state.output}</pre>",
-            unsafe_allow_html=True
-        )
-
-    st.divider()
-
-    st.markdown("""##### 💻[발전문제] 조건문을 이용하여 num에 입력된 값이 짝수인지 홀수인지 구분하는 프로그램을 작성하세요""")
-     # 상태 초기화
-    if "output" not in st.session_state:
-        st.session_state.output = ""
-
-    # 레이아웃
-    c1, c2 = st.columns(2)
-
-    with c1:
-        st.markdown("### 📥 코드 입력")
-        code_input = st_ace(
-            value="num = \nif :\n    print('num은 짝수입니다')\nelse:\n    print('num은 홀수입니다.')",
-            language='python',
-            theme='dracula',
-            height=250,
-            key="ace_editor4"
-        )
-
-    with c2:
-        st.markdown("### 📤 실행 결과")
-        if st.button("▶️ 코드 실행하기",key="run4"):
-            output_buffer = io.StringIO()
-            try:
-                sys.stdout = output_buffer
-                exec_globals = {}
-                exec(code_input, exec_globals)
-                sys.stdout = sys.__stdout__
-                st.session_state.output = output_buffer.getvalue() or "출력된 내용이 없습니다."
-                st.session_state.status = "success"
-            except Exception as e:
-                sys.stdout = sys.__stdout__
-                st.session_state.output = f"{e.__class__.__name__}: {e}"
-                st.session_state.status = "error"
-
-        # 출력 스타일링
-        if st.session_state.status == "success":
-            st.markdown(f"```bash\n{st.session_state.output}\n```")
-        elif st.session_state.status == "error":
-            st.markdown("#### ❌ 실행 중 오류 발생")
-            st.markdown(f"<pre style='color: red; background-color: #ffe6e6; padding: 10px; border-radius: 5px;'>{st.session_state.output}</pre>", unsafe_allow_html=True)
-    st.divider()
+    st.markdown("""##### 💻 [발전 문제] 1부터 5까지의 합을 구하는 코드를 작성하세요""")
+    code_block_columns(4, """total = 0 #초기값 설정\nfor i """)
