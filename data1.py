@@ -131,7 +131,7 @@ print(list)
     - 파이썬은 인덱스를 0부터 셉니다.
     - 리스트의 특정 위치(인덱스)를 출력하려면 대괄호를 사용합니다.
     """)
-    st.image("image\data1_img1.png")
+    st.image("image/data1_img1.png")
     st.code("""
 list = [12, '문자열', True]
 print(list[0])  
