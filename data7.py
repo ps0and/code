@@ -1,63 +1,113 @@
-import sys
-print("🧠 Streamlit 앱 실행 중인 파이썬 경로:", sys.executable)
 import streamlit as st
-import matplotlib.pyplot as plt
+import numpy as np
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense
+from streamlit_ace import st_ace
+import io, sys, textwrap
 
-def show():
-    st.subheader("📘 2일차 1교시 수업: 등차수열의 개념")
-    st.markdown("""
-    - **주제**: 등차수열의 일반항과 합
-    - **목표**: 등차수열의 규칙을 이해하고 일반항과 합을 구할 수 있다.
-    - **예제**: 2, 5, 8, 11, ... 의 일반항과 합 구하기
-    - **활동**: 코드 작성 → 실행 → 채점 → 시각화
-    """)
+# 0) 코드 템플릿 (맨 앞 0열)
+RAW_CODE_TEMPLATE = """\
+import numpy as np
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense
 
-    st.divider()
-    st.subheader("✏️ 1단계: 나만의 등차수열 코드 작성")
+# 1) 학생 입력값
+seq = [{seq_input}]
+n = {term_idx}
 
-    default_code = """# 첫째항이 2이고 공차가 3인 등차수열 앞 5개 항 출력
-sequence = []
-for i in range(5):
-    sequence.append(2 + 3*i)
-st.write("등차수열:", sequence)
+# 2) 데이터 전처리
+data = np.array(seq, dtype=float)
+X, y = [], []
+for i in range(len(data) - 1):
+    X.append([data[i]])
+    y.append(data[i+1])
+X = np.array(X).reshape(-1, 1, 1)
+y = np.array(y)
+
+# 3) 3층 LSTM 모델 구성
+model = Sequential([
+    LSTM({units1}, return_sequences=True, input_shape=(1, 1)),
+    LSTM({units2}, return_sequences=False),
+    Dense(1)
+])
+model.compile(optimizer='adam', loss='mse')
+
+# 4) 모델 학습
+model.fit(X, y, epochs={epochs}, verbose=0)
+
+# 5) 다음 항 예측
+last_input = np.array([[[data[-1]]]])
+pred = model.predict(last_input)[0, 0]
+
+# 6) 결과 출력
+print(f"예측된 {{n}}번째 항: {{pred:.2f}}")
 """
 
-    user_code = st.text_area("등차수열을 출력하는 코드를 작성해보세요!", height=220, value=default_code)
+def show():
+    st.header("▶️ 수열 예측 인터랙티브 (3층 LSTM)")
 
-    # 코드 실행 및 결과 저장
-    local_vars = {}
+    # 1) 하이퍼파라미터 입력
+    units1   = st.slider("1층 LSTM 유닛 수",  128, 256, 200, step=10)
+    units2   = st.slider("2층 LSTM 유닛 수",  64, 128,  64, step=10)
+    epochs   = st.slider("학습 에포크 수",    10, 500, 100, step=10)
 
-    if st.button("✅ 코드 실행하기"):
-        try:
-            exec(user_code, {"st": st}, local_vars)
-            if "sequence" in local_vars:
-                st.success("✅ 코드 실행 완료!")
-                st.write("🔍 출력된 수열:", local_vars["sequence"])
-            else:
-                st.warning("⚠️ 'sequence' 리스트가 정의되지 않았어요. 변수명을 확인해주세요.")
-        except Exception as e:
-            st.error(f"❌ 오류가 발생했어요: {e}")
+    # 2) 수열 입력
+    seq_input = st.text_input("콤마로 구분된 수열을 입력하세요", "2,5,8,11")
 
-    # 채점 기능
-    if "sequence" in local_vars:
+    # 3) 예측할 항 번호 입력
+    term_idx = st.number_input(
+        "몇 번째 항을 예측할까요?",
+        min_value=1,
+        value=len(seq_input.split(",")) + 1,
+        step=1
+    )
+
+    # 4) full_code 생성 (항상)
+    raw_code = RAW_CODE_TEMPLATE.format(
+        seq_input=seq_input,
+        term_idx=term_idx,
+        units1=units1,
+        units2=units2,
+        epochs=epochs
+    )
+    full_code = textwrap.dedent(raw_code)
+
+    # 5) 전체 코드 토글
+    if "show_full" not in st.session_state:
+        st.session_state.show_full = False
+    if st.button("코드 생성하기"):
+        st.session_state.show_full = True
+
+    # 6) 전체 코드 노출
+    if st.session_state.show_full:
+        st.subheader("🔍 전체 실행 코드")
+        st.code(full_code, language="python")
+        if st.checkbox("코드를 바로 실행해보기"):
+            buf = io.StringIO()
+            try:
+                sys.stdout = buf
+                exec(full_code, {})
+            finally:
+                sys.stdout = sys.__stdout__
+            st.success(f"실행 결과: {buf.getvalue().strip()}")
+
+        # 7) ACE 에디터 (항상 여기서 렌더링됩니다)
         st.divider()
-        st.subheader("📋 2단계: 자동 채점 결과")
-
-        expected = [2, 5, 8, 11, 14]
-        user_seq = local_vars["sequence"]
-
-        if user_seq == expected:
-            st.success("🎉 정답입니다! 등차수열을 정확히 출력했어요.")
-        else:
-            st.error(f"❌ 수열이 정답과 다릅니다.\n\n👉 정답: {expected}\n🧪 당신의 출력: {user_seq}")
-
-        # 시각화
-        st.divider()
-        st.subheader("📊 3단계: 수열 시각화")
-
-        fig, ax = plt.subplots()
-        ax.plot(range(1, len(user_seq)+1), user_seq, marker='o')
-        ax.set_title("등차수열 시각화")
-        ax.set_xlabel("항 번호")
-        ax.set_ylabel("값")
-        st.pyplot(fig)
+        st.subheader("📥 실행 코드 (수정 가능)")
+        user_code = st_ace(
+            value=full_code,         # 항상 표시할 코드
+            language="python",
+            theme="monokai",
+            height=350,
+            key="ace_lstm_3layer"
+        )
+        if st.button("▶️ LSTM 예측 실행하기"):
+            buf = io.StringIO()
+            try:
+                sys.stdout = buf
+                exec(user_code, {})
+            finally:
+                sys.stdout = sys.__stdout__
+            st.success(f"실행 결과: {buf.getvalue().strip()}")

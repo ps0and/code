@@ -1,16 +1,16 @@
 import streamlit as st
 
 # 페이지 제목
-st.title("7days of Coding Mathematics")
+st.title(":rainbow[7days of Coding Mathematics]")
 # 드롭다운 옵션 설정
 options = {
-    "1day": "data1",
-    "2day": "data2",
-    "3day": "data3",
-    "4day": "data4",
-    "5day": "data5",
-    "6day": "data6",    
-    "7day": "data7"
+    "1Day": "data1",
+    "2Day": "data2",
+    "3Day": "data3",
+    "4Day": "data4",
+    "5Day": "data5",
+    "6Day": "data6",    
+    "7Day": "data7"
 }
 
 selection = st.selectbox("도전을 시작합시다! 수업을 선택하세요. 👇", list(options.keys()))

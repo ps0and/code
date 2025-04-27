@@ -4,6 +4,7 @@ import pandas as pd
 import io
 import sys
 
+
 # ✅ 실행 함수
 def code_runner(code_input, output_key, status_key):
     output_buffer = io.StringIO()
@@ -31,9 +32,9 @@ def display_output(output_key, status_key):
         )
 
 # ✅ 문제 UI 구성 함수
-def code_block(problem_number, title, starter_code):
-    output_key = f"output{problem_number}"
-    status_key = f"status{problem_number}"
+def code_block(problem_number, title, starter_code, prefix=""):
+    output_key = f"{prefix}output{problem_number}"
+    status_key = f"{prefix}status{problem_number}"
     if output_key not in st.session_state:
         st.session_state[output_key] = ""
     if status_key not in st.session_state:
@@ -47,18 +48,18 @@ def code_block(problem_number, title, starter_code):
             language='python',
             theme='dracula',
             height=250,
-            key=f"ace_editor{problem_number}"
+            key=f"{prefix}editor{problem_number}"
         )
     with c2:
         st.markdown("### 📤 실행 결과")
-        if st.button("▶️ 코드 실행하기", key=f"run{problem_number}"):
+        if st.button("▶️ 코드 실행하기", key=f"{prefix}run{problem_number}"):
             code_runner(code_input, output_key, status_key)
         display_output(output_key, status_key)
     st.divider()
 
 # ✅ 메인 화면
 def show():
-    st.header("🗓️1day")
+    st.header("🗓️1Day")
     st.subheader("파이썬 기초: 자료형, 변수, 리스트")
     st.write("수학을 코딩하기 위해서는 코딩에 대한 기본 문법을 알고 있어야 합니다.")
     st.write("코딩 시작합니다.")
@@ -84,7 +85,7 @@ def show():
     - ```print()``` 함수의 괄호 안에 출력하고 싶은 내용을 적습니다.
     - ```print(1,'a')``` 함수의 괄호 안에 출력하고 싶은 내용을 쉼표로 연결해서 여러 개 적어도 됩니다.""")
     st.markdown("""##### 💻[문제] 아래와 같이 print 함수를 이용해서 다양한 자료형을 출력해보세요""")
-    code_block(1, "print 함수", "print('hello', 320)\nprint(21)")
+    code_block(1, "print 함수", "print('hello', 320)\nprint(21)", prefix="d1_")
 
     # 사칙연산 정리표
     data = {
@@ -106,7 +107,7 @@ def show():
     st.subheader("🧮 파이썬 사칙연산 정리표")
     st.dataframe(df, use_container_width=True)
     st.markdown("""##### 💻[문제] 아래와 같이 숫자의 연산을 출력해보세요""")
-    code_block(2, "연산 출력", "print('5+7=', 5+7)\nprint('5**2=', 5**2)")
+    code_block(2, "연산 출력", "print('5+7=', 5+7)\nprint('5**2=', 5**2)", prefix="d1_")
 
     st.subheader("ℹ️ 변수와 입력")
     st.write("""          
@@ -114,7 +115,7 @@ def show():
     - ```변수 = 값``` (값을 변수에 할당합니다.)
     - ```=``` 기호는 '같다'의 의미가 아니라 우변의 값을 좌변에 '할당하겠다'의 의미""")
     st.markdown("""##### 💻[문제] 아래와 같이 x라는 변수에 숫자나 문자를 할당하고 변수를 출력해보세요""")
-    code_block(3, "변수 사용", "pi = 3.14\nprint(pi)")
+    code_block(3, "변수 사용", "pi = 3.14\nprint(pi)", prefix="d1_")
 
     st.subheader("ℹ️ 리스트(list) 및 인덱스(index)")
     st.write("""          
@@ -147,4 +148,6 @@ print(list)
 # 출력: ['a', 'b', 'c', 'd']
     """)
     st.markdown("""##### 💻[문제] 리스트에 자료를 추가하고 특정 요소를 출력해보세요""")
-    code_block(4, "리스트 사용", "list = ['a','b','c']\nlist.append('d')\nprint(list[3])")
+    with st.expander("💡 힌트 보기"):
+        st.markdown("`list.append()`를 사용하여 리스트에 요소를 추가하고 `list[]`를 사용하여 특정 요소를 출력합니다.")
+    code_block(4, "리스트 사용", "list =", prefix="d1_")

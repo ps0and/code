@@ -1,63 +1,106 @@
-import sys
-print("🧠 Streamlit 앱 실행 중인 파이썬 경로:", sys.executable)
 import streamlit as st
+import numpy as np
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
+from streamlit_ace import st_ace
 import matplotlib.pyplot as plt
+import io, sys, textwrap
 
 def show():
-    st.subheader("📘 2일차 1교시 수업: 등차수열의 개념")
-    st.markdown("""
-    - **주제**: 등차수열의 일반항과 합
-    - **목표**: 등차수열의 규칙을 이해하고 일반항과 합을 구할 수 있다.
-    - **예제**: 2, 5, 8, 11, ... 의 일반항과 합 구하기
-    - **활동**: 코드 작성 → 실행 → 채점 → 시각화
-    """)
+    st.header("▶️ 수열 예측")
 
-    st.divider()
-    st.subheader("✏️ 1단계: 나만의 등차수열 코드 작성")
+    # 1) 모델 선택
+    model = st.radio("모델을 선택하세요", ["LinearRegression", "PolynomialRegression"])
+    degree = st.slider("다항 회귀 차수 선택", 2, 5, 2) if model=="PolynomialRegression" else None
 
-    default_code = """# 첫째항이 2이고 공차가 3인 등차수열 앞 5개 항 출력
-sequence = []
-for i in range(5):
-    sequence.append(2 + 3*i)
-st.write("등차수열:", sequence)
+    # 2) 수열 입력
+    seq_input = st.text_input("수열을 입력하세요 (예: 2,5,8,11)", "2,5,8,11")
+
+    # 3) 예측할 항 번호 입력
+    term_idx = st.number_input("예측할 항 번호를 입력하세요",
+                               min_value=1, value=len(seq_input.split(","))+1)
+
+    # 4) 코드 템플릿 생성
+    if model=="LinearRegression":
+        raw = f"""
+import numpy as np
+from sklearn.linear_model import LinearRegression
+
+seq = [{seq_input}]
+n = {term_idx}
+
+X = np.arange(1, len(seq)+1).reshape(-1,1)
+y = np.array(seq)
+
+model = LinearRegression()
+model.fit(X, y)
+
+pred = model.predict([[n]])[0]
 """
+    else:
+        raw = f"""
+import numpy as np
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
 
-    user_code = st.text_area("등차수열을 출력하는 코드를 작성해보세요!", height=220, value=default_code)
+seq = [{seq_input}]
+n = {term_idx}
 
-    # 코드 실행 및 결과 저장
-    local_vars = {}
+X = np.arange(1, len(seq)+1).reshape(-1,1)
+y = np.array(seq)
 
-    if st.button("✅ 코드 실행하기"):
+poly = PolynomialFeatures(degree={degree}, include_bias=False)
+Xp = poly.fit_transform(X)
+model = LinearRegression()
+model.fit(Xp, y)
+
+pred = model.predict(poly.transform([[n]]))[0]
+"""
+    full_code = textwrap.dedent(raw)
+
+    # 5) ACE 에디터: 항상 최신 full_code 반영
+    signature = f"{model}|{seq_input}|{term_idx}|{degree}"
+    user_code = st_ace(
+        value=full_code,
+        language="python",
+        theme="monokai",
+        height=300,
+        key=f"ace_{signature}"
+    )
+
+    # 6) 실행 및 시각화
+    if st.button("▶️ 예측 실행 및 시각화"):
+        buf = io.StringIO()
+        # exec할 때 로컬 실행 공간을 dict로 만들어 seq, pred, n을 뽑아옵니다.
+        exec_locals = {}
         try:
-            exec(user_code, {"st": st}, local_vars)
-            if "sequence" in local_vars:
-                st.success("✅ 코드 실행 완료!")
-                st.write("🔍 출력된 수열:", local_vars["sequence"])
-            else:
-                st.warning("⚠️ 'sequence' 리스트가 정의되지 않았어요. 변수명을 확인해주세요.")
-        except Exception as e:
-            st.error(f"❌ 오류가 발생했어요: {e}")
+            sys.stdout = buf
+            exec(user_code, {}, exec_locals)
+        finally:
+            sys.stdout = sys.__stdout__
 
-    # 채점 기능
-    if "sequence" in local_vars:
-        st.divider()
-        st.subheader("📋 2단계: 자동 채점 결과")
-
-        expected = [2, 5, 8, 11, 14]
-        user_seq = local_vars["sequence"]
-
-        if user_seq == expected:
-            st.success("🎉 정답입니다! 등차수열을 정확히 출력했어요.")
-        else:
-            st.error(f"❌ 수열이 정답과 다릅니다.\n\n👉 정답: {expected}\n🧪 당신의 출력: {user_seq}")
+        # 캡처된 프린트 결과
+        output = buf.getvalue().strip()
+        st.success(f"실행 결과: {output}")
 
         # 시각화
-        st.divider()
-        st.subheader("📊 3단계: 수열 시각화")
+        seq = exec_locals.get("seq", [])
+        pred = exec_locals.get("pred", None)
+        n = exec_locals.get("n", None)
 
-        fig, ax = plt.subplots()
-        ax.plot(range(1, len(user_seq)+1), user_seq, marker='o')
-        ax.set_title("등차수열 시각화")
-        ax.set_xlabel("항 번호")
-        ax.set_ylabel("값")
-        st.pyplot(fig)
+        if seq and (pred is not None) and (n is not None):
+            fig, ax = plt.subplots()
+            ax.plot(range(1, len(seq)+1), seq, marker="o", label="input sequence")
+            ax.scatter(n, pred, color="red", label=f"{n}th predicted value")
+            ax.set_title("Sequence and prediction results")
+            ax.set_xlabel("number")
+            ax.set_ylabel("value")
+            ax.legend()
+            ax.grid(True)
+            st.pyplot(fig)
+        else:
+            st.warning("`seq`, `pred`, `n` The value is not properly defined.")
+
+# 실제 앱에서는 아래처럼 show()를 호출합니다.
+if __name__ == "__main__":
+    show()
