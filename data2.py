@@ -126,9 +126,10 @@ def show():
     """)
     st.code("""
     for i in range(10):
-            if i==5:
-                break # i가 5일 때 즉시 반복 종료
-        print(i)
+        if i==5:
+            break # i가 5일 때 즉시 반복 종료
+        else:
+            print(i)
     # 출력:0 1 2 3 4       
     """)
 
