@@ -124,20 +124,14 @@ def show():
     for 반복자 in 반복할 수 있는 것:
         코드
     """)
-    st.code("""
-    for i in range(1,4): 
-        print(i) 
-    # 출력: 1,2,3
-    """)
     st.write("""
     - `break`는 반복문 내부에서 사용되며, 즉시 반복을 종료하고 반복문 뒤의 코드를 실행
     """)
     st.code("""
-    for i in range(10): # range(end)는 0부터 시작해서 end-1까지 정수 범위를 생성
+    for i in range(1, 10):
         if i==5:
             break # i가 5일 때 즉시 반복 종료
-        else:
-            print(i)
+        print(i)
     # 출력:0 1 2 3 4       
     """)
 
