@@ -3,36 +3,37 @@ from streamlit_ace import st_ace
 import io
 import sys
 
-# ✅ 실행 함수
-def code_runner(code_input, output_key, status_key):
+# ✅ 코드 실행 함수
+def code_runner(code_input):
     output_buffer = io.StringIO()
+    result = ""
+    status = "success"
     try:
         sys.stdout = output_buffer
         exec_globals = {}
         exec(code_input, exec_globals)
-        sys.stdout = sys.__stdout__
-        st.session_state[output_key] = output_buffer.getvalue() or "출력된 내용이 없습니다."
-        st.session_state[status_key] = "success"
+        result = output_buffer.getvalue() or "출력된 내용이 없습니다."
     except Exception as e:
+        result = f"{e.__class__.__name__}: {e}"
+        status = "error"
+    finally:
         sys.stdout = sys.__stdout__
-        st.session_state[output_key] = f"{e.__class__.__name__}: {e}"
-        st.session_state[status_key] = "error"
+    return result, status
 
-# ✅ 출력 함수
-def display_output(output_key, status_key):
-    if st.session_state.get(status_key) == "success":
-        st.markdown(f"```bash\n{st.session_state[output_key]}\n```")
-    elif st.session_state.get(status_key) == "error":
+# ✅ 출력 표시 함수
+def display_output(result, status):
+    if status == "success":
+        st.markdown(f"```bash\n{result}\n```")
+    else:
         st.markdown("###### ❌ 실행 중 오류 발생")
         st.markdown(
-            f"<pre style='color: red; background-color: #ffe6e6; padding: 10px; border-radius: 5px;'>{st.session_state[output_key]}</pre>",
+            f"<pre style='color: red; background-color: #ffe6e6; padding: 10px; border-radius: 5px;'>{result}</pre>",
             unsafe_allow_html=True
         )
 
-# ✅ 좌우(2열) 코드 블록
+# ✅ 코드 블록 (좌우형)
 def code_block_columns(problem_number, starter_code, prefix=""):
-    output_key = f"{prefix}output{problem_number}"
-    status_key = f"{prefix}status{problem_number}"
+    key_prefix = f"{prefix}{problem_number}"
     c1, c2 = st.columns(2)
     with c1:
         st.markdown("###### 📥 코드 입력")
@@ -41,32 +42,32 @@ def code_block_columns(problem_number, starter_code, prefix=""):
             language='python',
             theme='dracula',
             height=220,
-            key=f"{prefix}editor{problem_number}"
+            key=f"{key_prefix}_editor"
         )
     with c2:
         st.markdown("###### 📤 실행 결과")
-        if st.button("▶️ 코드 실행하기", key=f"{prefix}run{problem_number}"):
-            code_runner(code_input, output_key, status_key)
-        display_output(output_key, status_key)
-    st.divider()
+        run = st.button("▶️ 코드 실행하기", key=f"{key_prefix}_run")
+        if run:
+            result, status = code_runner(code_input)
+            display_output(result, status)
 
-# ✅ 상하(1열) 코드 블록
+# ✅ 코드 블록 (상하형)
 def code_block_rows(problem_number, starter_code, prefix=""):
-    output_key = f"{prefix}output{problem_number}"
-    status_key = f"{prefix}status{problem_number}"
+    key_prefix = f"{prefix}{problem_number}"
     st.markdown("###### 📥 코드 입력")
     code_input = st_ace(
         value=starter_code,
         language='python',
         theme='dracula',
         height=200,
-        key=f"{prefix}editor{problem_number}"
+        key=f"{key_prefix}_editor"
     )
-    if st.button("▶️ 코드 실행하기", key=f"{prefix}run{problem_number}"):
-        code_runner(code_input, output_key, status_key)
-    st.markdown("###### 📤 실행 결과")
-    display_output(output_key, status_key)
-    st.divider()
+    run = st.button("▶️ 코드 실행하기", key=f"{key_prefix}_run")
+    if run:
+        st.markdown("###### 📤 실행 결과")
+        result, status = code_runner(code_input)
+        display_output(result, status)
+
 
 # ✅ 메인 수업 내용
 def show():
@@ -132,7 +133,7 @@ def show():
         if i==5:
             break # i가 5일 때 즉시 반복 종료
         print(i)
-    # 출력: 1 2 3 4       
+    # 출력:0 1 2 3 4       
     """)
 
     st.markdown("""###### 💻 :blue[[예제 2]] 1부터 10까지 숫자를 출력하는 코드를 작성하세요""")
