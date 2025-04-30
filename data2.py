@@ -77,7 +77,6 @@ def show():
     st.divider()
 
     st.subheader("🎥 수업 영상 보기")
-    st.video("https://youtu.be/wuxmZ8lu79s?si=sdRCeDq5m0blQDv0")
 
     st.subheader("📌 학습 목표")
     st.write("""
@@ -145,7 +144,7 @@ def show():
 
     st.markdown("""###### 💻 :blue[[문제 2]] 1부터 5까지의 합을 구하는 코드를 작성하세요""")
     with st.expander("💡 힌트 보기"):
-        st.markdown(" 1~5까지 수는 `range(1, 6)`으로 만들 수 있습니다. `total`이라는 변수를 만들어서 `for`문 안에서 `total=totla + i`로 더해줍니다.""")
+        st.markdown(" 1~5까지 수는 `range(1, 6)`으로 만들 수 있습니다. `total`이라는 변수를 만들어서 `for`문 안에서 `total=total + i`로 더해줍니다.""")
     with st.expander("💡 정답 보기"):
         st.markdown("""```python\ntotal = 0\nfor i in range(1, 6):\n    total = total + i # total += i \nprint('합계:', total)\n```""")
     code_block_columns(4, "total = 0 #초기값 설정\nfor i \n\nprint('합계:', total)", prefix="d2_")
