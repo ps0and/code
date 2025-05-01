@@ -3,37 +3,37 @@ from streamlit_ace import st_ace
 import io
 import sys
 
-# ✅ 코드 실행 함수
-def code_runner(code_input, output_key, status_key):
+# ✅ 코드 실행 함수 (간결하고 안전하게)
+def code_runner(code_input):
     output_buffer = io.StringIO()
+    result = ""
+    status = "success"
     try:
         sys.stdout = output_buffer
         exec_globals = {}
         exec(code_input, exec_globals)
-        sys.stdout = sys.__stdout__
-        st.session_state[output_key] = output_buffer.getvalue() or "출력된 내용이 없습니다."
-        st.session_state[status_key] = "success"
+        result = output_buffer.getvalue() or "출력된 내용이 없습니다."
     except Exception as e:
+        result = f"{e.__class__.__name__}: {e}"
+        status = "error"
+    finally:
         sys.stdout = sys.__stdout__
-        st.session_state[output_key] = f"{e.__class__.__name__}: {e}"
-        st.session_state[status_key] = "error"
+    return result, status
 
-# ✅ 실행 결과 출력 함수
-def display_output(output_key, status_key):
-    if st.session_state.get(status_key) == "success":
-        st.markdown(f"```bash\n{st.session_state[output_key]}\n```")
-    elif st.session_state.get(status_key) == "error":
+# ✅ 출력 함수 (즉시 렌더링용)
+def display_output(result, status):
+    if status == "success":
+        st.markdown(f"```bash\n{result}\n```")
+    else:
         st.markdown("#### ❌ 실행 중 오류 발생")
         st.markdown(
-            f"<pre style='color: red; background-color: #ffe6e6; padding: 10px; border-radius: 5px;'>"
-            f"{st.session_state[output_key]}</pre>",
+            f"<pre style='color: red; background-color: #ffe6e6; padding: 10px; border-radius: 5px;'>{result}</pre>",
             unsafe_allow_html=True
         )
 
-# ✅ 좌우 2열 코드 작성 및 실행 블록
+# ✅ 리팩토링된 코드 블록 함수 (세션 상태 저장 X)
 def code_block_columns(problem_number, starter_code, prefix=""):
-    output_key = f"{prefix}output{problem_number}"
-    status_key = f"{prefix}status{problem_number}"
+    key_prefix = f"{prefix}{problem_number}"
     c1, c2 = st.columns(2)
     with c1:
         st.markdown("### 📥 코드 입력")
@@ -42,14 +42,13 @@ def code_block_columns(problem_number, starter_code, prefix=""):
             language='python',
             theme='dracula',
             height=220,
-            key=f"{prefix}editor{problem_number}"
+            key=f"{key_prefix}_editor"
         )
     with c2:
         st.markdown("### 📤 실행 결과")
-        if st.button("▶️ 코드 실행하기", key=f"{prefix}run{problem_number}"):
-            code_runner(code_input, output_key, status_key)
-        display_output(output_key, status_key)
-    st.divider()
+        if st.button("▶️ 코드 실행하기", key=f"{key_prefix}_run"):
+            result, status = code_runner(code_input)
+            display_output(result, status)
 
 # ✅ 메인 수업 페이지 구성
 def show():
@@ -59,7 +58,6 @@ def show():
     st.divider()
 
     st.subheader("🎥 오늘의 수업 영상")
-    st.video("https://youtu.be/wuxmZ8lu79s?si=sdRCeDq5m0blQDv0")
 
     st.subheader("📌 학습 목표")
     st.write("""
@@ -107,8 +105,9 @@ def show():
     print(seq)
     # 출력: [3, 5, 7, 9, 11, 13, 15, 17, 19, 21]
     """)
+    st.divider()
 
-    st.markdown("###### 💻 [문제 1] 첫째 항이 `2`, 공차가 `5`인 등차수열을 `5`항까지 출력하세요.")
+    st.markdown("###### 💻 :blue[[문제 1]] 첫째 항이 `2`, 공차가 `5`인 등차수열을 `5`항까지 출력하세요.")
     with st.expander("💡 힌트 보기"):
         st.markdown("`for`문과 `append()`를 활용해보세요. 새로운 항은 `seq[-1] + d`로 계산합니다.")
     with st.expander("💡 정답 보기"):
@@ -124,7 +123,7 @@ def show():
 
     code_block_columns(1, "a=2\nd=5\nseq=[a]\n# 여기에 for문 작성\nprint(seq)", prefix="d3_")
 
-    st.markdown("###### 💻 [문제 2] 첫째 항이 `30`, 공차가 `-3`인 등차수열에서 처음으로 음수가 되는 항은 제몇 항인지 출력하세요.")
+    st.markdown("###### :blue[💻 [문제 2]] 첫째 항이 `30`, 공차가 `-3`인 등차수열에서 처음으로 음수가 되는 항은 제몇 항인지 출력하세요.")
     with st.expander("💡 힌트 보기"):
         st.markdown("`for`문으로 각 항을 생성하면서 `if next_val < 0:` 조건을 확인하고, 음수가 되는 순간 `break`로 종료한 뒤 그 인덱스(항 번호)를 출력해 보세요.")
     with st.expander("💡 정답 보기"):
@@ -140,19 +139,19 @@ def show():
             break
     """)
     code_block_columns(2, "a=30\nd=-3\nseq=[a]\n# 여기에 for문 작성", prefix="d3_")
+    st.divider()
 
-    st.markdown("##### 💻 [도전 문제 2] 나만의 등차수열 문제 만들기")
-
+    st.markdown("##### 💻 :blue[[모둠 활동]] 나만의 등차수열 문제 만들기")
+    st.write("✨:orange[학생 문제 설명과 작성 코드는 실행 결과 아래에서 확인할 수 있습니다.]")
+    # 💡 모둠 활동: 문제 설명과 코드 실습 최적화
     student_problem = st.text_area(
         "📝 문제 설명 입력", 
-        value=st.session_state.get("student_problem_text", "초항이 4이고 공차가 3인 등차수열의 첫 7항을 생성하여 출력하세요.")
+        value=st.session_state.get("student_problem_text", "초항이 4이고 공차가 3인 등차수열의 첫 7항을 출력하세요.")
     )
     st.session_state["student_problem_text"] = student_problem
 
-    if "custom_code" not in st.session_state:
-        st.session_state["custom_code"] = "# 여기에 로직을 작성하세요\n"
     user_code = st_ace(
-        value=st.session_state["custom_code"],
+        value=st.session_state.get("custom_code", "# 여기에 로직을 작성하세요\n"),
         language="python",
         theme="monokai",
         height=250,
@@ -161,14 +160,14 @@ def show():
     st.session_state["custom_code"] = user_code
 
     if st.button("▶️ 실행 결과 확인"):
-        code_runner(user_code, "custom_out", "custom_status")
-        display_output("custom_out", "custom_status")
+        result, status = code_runner(user_code)
+        display_output(result, status)
 
-        combined = (
-            f"# 🔍 학생 문제 설명\n{student_problem}\n\n"
-            f"# 💻 학생 작성 코드\n{user_code}"
+        st.code(f"# 🔍 학생 문제 설명\n{student_problem}\n\n# 💻 학생 작성 코드\n{user_code}")
+        st.markdown(
+            "<div style='text-align: right; color:orange;'>✨문제 설명과 코드를 복사하여 제출하세요.</div>",
+            unsafe_allow_html=True
         )
-        st.code(combined)
 
 if __name__ == "__main__":
     show()

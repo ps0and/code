@@ -5,57 +5,53 @@ import io
 import sys
 
 
-# ✅ 실행 함수
-def code_runner(code_input, output_key, status_key):
+# 실행 함수
+def code_runner(code_input):
     output_buffer = io.StringIO()
+    result, status = "", "success"
     try:
         sys.stdout = output_buffer
         exec_globals = {}
         exec(code_input, exec_globals)
-        sys.stdout = sys.__stdout__
-        st.session_state[output_key] = output_buffer.getvalue() or "출력된 내용이 없습니다."
-        st.session_state[status_key] = "success"
+        result = output_buffer.getvalue() or "출력된 내용이 없습니다."
     except Exception as e:
+        result = f"{e.__class__.__name__}: {e}"
+        status = "error"
+    finally:
         sys.stdout = sys.__stdout__
-        st.session_state[output_key] = f"{e.__class__.__name__}: {e}"
-        st.session_state[status_key] = "error"
+    return result, status
 
-# ✅ 출력 표시 함수
-def display_output(output_key, status_key):
-    if st.session_state.get(status_key) == "success":
-        st.markdown(f"```bash\n{st.session_state[output_key]}\n```")
-    elif st.session_state.get(status_key) == "error":
+# 출력 함수
+def display_output(result, status):
+    if status == "success":
+        st.markdown(f"```bash\n{result}\n```")
+    else:
         st.markdown("##### ❌ 실행 중 오류 발생")
         st.markdown(
-            f"<pre style='color: red; background-color: #ffe6e6; padding: 10px; border-radius: 5px;'>{st.session_state[output_key]}</pre>",
+            f"<pre style='color: red; background-color: #ffe6e6; padding: 10px; border-radius: 5px;'>{result}</pre>",
             unsafe_allow_html=True
         )
 
-# ✅ 문제 UI 구성 함수
+# 공통 코드 블록 UI
 def code_block(problem_number, title, starter_code, prefix=""):
-    output_key = f"{prefix}output{problem_number}"
-    status_key = f"{prefix}status{problem_number}"
-    if output_key not in st.session_state:
-        st.session_state[output_key] = ""
-    if status_key not in st.session_state:
-        st.session_state[status_key] = ""
-
+    key_prefix = f"{prefix}{problem_number}"
     c1, c2 = st.columns(2)
+
     with c1:
-        st.markdown("##### 📥 코드 입력")
+        st.markdown(f"##### 📥 코드 입력 - {title}")
         code_input = st_ace(
             value=starter_code,
             language='python',
             theme='dracula',
             height=250,
-            key=f"{prefix}editor{problem_number}"
+            key=f"{key_prefix}_editor"
         )
+
     with c2:
         st.markdown("##### 📤 실행 결과")
-        if st.button("▶️ 코드 실행하기", key=f"{prefix}run{problem_number}"):
-            code_runner(code_input, output_key, status_key)
-        display_output(output_key, status_key)
-    st.divider()
+        if st.button("▶️ 코드 실행하기", key=f"{key_prefix}_run"):
+            result, status = code_runner(code_input)
+            display_output(result, status)
 
 # ✅ 메인 화면
 def show():
@@ -66,7 +62,6 @@ def show():
     st.divider()
 
     st.subheader("🎥 수업 영상 보기")
-    st.video("https://youtu.be/wuxmZ8lu79s?si=sdRCeDq5m0blQDv0")
     st.subheader("📌 학습 목표")
     st.write("""
     - 파이썬의 기본 자료형과 변수 선언의 이해
