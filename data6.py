@@ -189,7 +189,7 @@ y = np.array(seq) #목표값은 1차원 배열
 model = LinearRegression() #선형 회귀모델
 model.fit(X, y) #머신러닝 학습
 
-pred = model.predict([[n]])[0] $n번째 예측값
+pred = model.predict([[n]])[0] #n번째 예측값
 print(pred)
 """
     else:
