@@ -165,7 +165,7 @@ def show():
 
         st.code(f"# 🔍 학생 문제 설명\n{student_problem}\n\n# 💻 학생 작성 코드\n{user_code}")
         st.markdown(
-            "<div style='text-align: right; color:orange;'>✨문제 설명과 코드를 복사하여 제출하세요.</div>",
+            "<div style='text-align: right; color:orange;'>✨문제 설명과 코드를 복사하여 (링크:https://docs.google.com/spreadsheets/d/1n82pBQVdLg0iXVtm0aXJAGq0C_5N1RB-C-7sCZX7AEw/edit?usp=sharing) 제출하세요.</div>",
             unsafe_allow_html=True
         )
 
