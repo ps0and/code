@@ -99,11 +99,11 @@ def show():
     a = 3
     d = 2
     seq = [a]
-    for i in range(1, 10):
+    for i in range(1, 9):
         next_val = seq[-1] + d
         seq.append(next_val)
     print(seq)
-    # 출력: [3, 5, 7, 9, 11, 13, 15, 17, 19, 21]
+    # 출력: [3, 5, 7, 9, 11, 13, 15, 17, 19]
     """)
     st.divider()
 
@@ -135,7 +135,7 @@ def show():
         next_val = seq[-1] + d
         seq.append(next_val)
         if next_val < 0:
-            print(i + 1)  # 1번째 항이 seq[0]이므로, i+1이 항 번호
+            print(i + 1)  # i=n 일때 next_val는 (n+1)항 
             break
     """)
     code_block_columns(2, "a=30\nd=-3\nseq=[a]\n# 여기에 for문 작성", prefix="d3_")
