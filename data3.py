@@ -165,9 +165,10 @@ def show():
 
         st.code(f"# 🔍 학생 문제 설명\n{student_problem}\n\n# 💻 학생 작성 코드\n{user_code}")
         st.markdown(
-            "<div style='text-align: right; color:orange;'>✨문제 설명과 코드를 복사하여 <a href='https://docs.google.com/spreadsheets/d/1n82pBQVdLg0iXVtm0aXJAGq0C_5N1RB-C-7sCZX7AEw/edit?usp=sharing' target='_blank'>스프레드시트로 과제를 제출하세요.</a></div>",
-            unsafe_allow_html=True
+        "<div style='text-align: right; color:orange;'>✨아래 문제 설명과 코드를 복사한 뒤, 스프레드시트 링크에 그대로 붙여넣어 과제를 제출해주세요! <a href='https://docs.google.com/spreadsheets/d/1n82pBQVdLg0iXVtm0aXJAGq0C_5N1RB-C-7sCZX7AEw/edit?usp=sharing' target='_blank'>(과제 제출 링크)</a></div>",
+        unsafe_allow_html=True
         )
+
 
 if __name__ == "__main__":
     show()
